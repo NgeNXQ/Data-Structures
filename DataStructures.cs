@@ -348,37 +348,42 @@
         private DoublyLinkedListNode<T> head;
         private DoublyLinkedListNode<T> tail;
 
-        private int count = 0;
+        private int count;
 
-        public int Count { get => count; }
+        public int Count { get => count;}
 
-        public DoublyLinkedList() { }
-
-        public DoublyLinkedList(params T[] items)
-        {
-            foreach (T item in items)
-                this.AddLast(item);
-        }
-
-        public void AddFirst(DoublyLinkedListNode<T> newNode)
-        {
-            if (newNode == null)
-                throw new System.ArgumentNullException($"{nameof(newNode)} is null.");
-
-            newNode.Next = head;
-            head = newNode;
-            ++count;
-        }
+        public DoublyLinkedListNode<T> First { get => head; }
+        public DoublyLinkedListNode<T> Last { get => tail; }
 
         public DoublyLinkedListNode<T> AddFirst(T item)
         {
             DoublyLinkedListNode<T> newNode = new DoublyLinkedListNode<T>(item);
 
-            newNode.Next = head;
-            head = newNode;
-            ++count;
+            if (head == null)
+                head = tail = newNode;
+            else
+            {
+                newNode.Next = head;
+                head.Previous = newNode;
+                head = newNode;
+            }
 
+            ++count;
             return newNode;
+        }
+
+        public void AddFirst(DoublyLinkedListNode<T> node)
+        {
+            if (head == null)
+                head = tail = node;
+            else
+            {
+                node.Next = head;
+                head.Previous = node;
+                head = node;
+            }
+
+            ++count;
         }
 
         public DoublyLinkedListNode<T> AddLast(T item)
@@ -395,46 +400,141 @@
             }
 
             ++count;
-
             return newNode;
         }
 
-        public void AddLast(DoublyLinkedListNode<T> newNode)
+        public void AddLast(DoublyLinkedListNode<T> node)
         {
-            if (newNode == null)
-                throw new System.ArgumentNullException($"{nameof(newNode)} is null.");
-
             if (head == null)
-                head = tail = newNode;
+                head = tail = node;
             else
             {
-                tail.Next = newNode;
-                newNode.Previous = tail;
-                tail = newNode;
+                tail.Next = node;
+                node.Previous = tail;
+                tail = node;
             }
 
             ++count;
         }
 
-        internal class DoublyLinkedListNode<T>
+        public DoublyLinkedListNode<T> AddAfter(DoublyLinkedListNode<T> node, T item)
         {
-            public DoublyLinkedListNode<T>? Previous { get; set; }
+            if (this.count > 0)
+            {
+                DoublyLinkedListNode<T> newNode = new DoublyLinkedListNode<T>(item);
 
-            public DoublyLinkedListNode<T>? Next { get; set; }
+                if (node.Equals(tail))
+                {
+                    this.AddLast(newNode);
+                    return newNode;
+                }
 
-            public T? Value { get; set; }
+                DoublyLinkedListNode<T> current = head;
 
-            public DoublyLinkedListNode() { }
+                for (int i = 0, length = count - 1; i < length; ++i)
+                {
+                    if (current.Equals(node))
+                    {
+                        newNode.Next = current.Next;
+                        current.Next.Previous = newNode;
+                        current.Next = newNode;
+                        newNode.Previous = current;
 
-            public DoublyLinkedListNode(T value) { this.Value = value; }
+                        ++count;
+                        return newNode;
+                    }
 
-            public override string ToString() => $"{this.Value}";
+                    current = current.Next;
+                }
+
+                throw new System.InvalidOperationException($"{nameof(node)} does not exist.");
+            }
+            else
+                throw new System.InvalidOperationException($"{nameof(DoublyLinkedList<T>)} is empty.");
+        }
+
+        public void AddAfter(DoublyLinkedListNode<T> node, DoublyLinkedListNode<T> newNode)
+        {
+            if (count > 0)
+            {
+                if (tail.Equals(node))
+                    this.AddLast(newNode);
+
+                DoublyLinkedListNode<T> current = head;
+
+                for (int i = 0, length = count - 1; i < length; ++i)
+                {
+                    if(current.Equals(node))
+                    {
+                        newNode.Next = current.Next;
+                        current.Next.Previous = newNode;
+                        newNode.Previous = current;
+                        current.Next = newNode;
+
+                        ++count;
+                        return;
+                    }
+
+                    current = current.Next; 
+                }
+
+                throw new System.InvalidOperationException($"{nameof(node)} does not exist.");
+            }
+            else
+                throw new System.InvalidOperationException($"{nameof(DoublyLinkedList<T>)} is empty.");
+        }
+        
+        public void RemoveFirst()
+        {
+            if (count > 0)
+            {
+                head = head.Next;
+
+                if (head == null)
+                    tail = null;
+                else
+                    head.Previous = null;
+
+                --count;
+            }
+            else
+                throw new System.InvalidOperationException($"{nameof(DoublyLinkedList<T>)} is empty.");
+        }
+
+        public void RemoveLast()
+        {
+            if (count > 0)
+            {
+                tail = tail.Previous;
+
+                if (tail == null)
+                    head = null;
+
+                --count;
+            }
+            else
+                throw new System.InvalidOperationException($"{nameof(DoublyLinkedList<T>)} is empty.");
+        }
+
+        public void Clear()
+        {
+            head = null;
+            tail = null;
+            count = 0;
         }
     }
 
     internal sealed class DoublyLinkedListNode<T>
     {
+        public DoublyLinkedListNode<T> Previous { get; set; }
 
+        public DoublyLinkedListNode<T> Next { get; set; }
+
+        public T Value { get; set; }
+
+        public DoublyLinkedListNode() { }
+
+        public DoublyLinkedListNode(T value) { this.Value = value; }
     }
     #endregion
 
@@ -628,187 +728,6 @@
     internal sealed class CircularDoublyLinkedListNode<T>
     {
 
-    }
-    #endregion
-
-    #region Deque
-    internal sealed class Deque<T>
-    {
-        private DequeNode<T>? head;
-        private DequeNode<T>? tail;
-
-        private int count;
-
-        public int Count { get => count; }
-
-        public bool IsEmpty { get { return count < 1 ? true : false; } }
-
-        public void PushBack(T item)
-        {
-            DequeNode<T> newNode = new DequeNode<T>(item);
-
-            if (head == null)
-                head = tail = newNode;
-            else
-            {
-                tail.Next = newNode;
-                newNode.Previous = tail;
-                tail = newNode;
-            }
-
-            ++count;
-        }
-
-        public void PushFront(T item)
-        {
-            DequeNode<T> newNode = new DequeNode<T>(item);
-
-            if (head == null)
-                head = tail = newNode;
-            else
-            {
-                head.Previous = newNode;
-                newNode.Next = head;
-                head = newNode;
-            }
-
-            ++count;
-        }
-
-        public T PopBack()
-        {
-            if (count < 1)
-                throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty. ");
-
-            T item = tail.Value;    
-            tail = tail.Previous;
-
-            if (tail == null)
-                head = null;
-
-            --count;
-            return item;
-        }
-
-        public T PopFront()
-        {
-            if (count < 1)
-                throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty.");
-
-            T item = head.Value;
-            head = head.Next;
-
-            if (head == null)
-                tail = null;
-
-            --count;
-            return item;
-        }
-
-        public bool TryPopBack(out T result)
-        {
-            if (count > 0)
-            {
-                result = tail.Value;
-                tail = tail.Previous;
-
-                if (tail == null)
-                    head = null;
-
-                --count;
-                return true;
-            }
-            else
-            {
-                result = default(T);
-                return false;
-            }
-        }
-
-        public bool TryPopFront(out T result)
-        {
-            if (count > 0)
-            {
-                result = head.Value;
-                head = head.Next;
-
-                if (head == null)
-                    tail = null;
-
-                --count;
-                return true;
-            }
-            else
-            {
-                result = default(T);
-                return false;
-            }
-        }
-
-        public T PeekBack() => count < 1 ? throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty.") : tail.Value;
-
-        public T PeekFront() => count < 1 ? throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty.") : head.Value;
-
-        public bool TryPeekBack(out T result)
-        {
-            if (count > 0)
-            {
-                result = tail.Value;
-                return true;
-            }
-            else
-            {
-                result = default(T);
-                return false;
-            }
-        }
-
-        public bool TryPeekFront(out T result)
-        {
-            if (count > 0)
-            {
-                result = head.Value;
-                return true;
-            }
-            else
-            {
-                result = default(T);
-                return false;
-            }
-        }
-
-        public bool Contains(T item)
-        {
-            DequeNode<T> current = head;
-
-            while (current != null)
-            {
-                if (current.Value.Equals(item))
-                    return true;
-
-                current = current.Next;
-            }
-
-            return false;
-        }
-
-        public void Clear()
-        {
-            head = null;
-            tail = null;
-            count = 0;
-        }
-
-        private sealed class DequeNode<T>
-        {
-            public DequeNode<T>? Previous { get; set; }
-            public DequeNode<T>? Next { get; set; }
-            public T Value { get; set; }
-
-            public DequeNode() { }
-
-            public DequeNode(T value) { this.Value = value; }
-        }
     }
     #endregion
 
@@ -1061,6 +980,209 @@
             public QueueNode() { }
 
             public QueueNode(T value) { this.Value = value; }  
+        }
+    }
+    #endregion
+
+    #region Deque
+    internal sealed class Deque<T>
+    {
+        private DequeNode<T> head;
+        private DequeNode<T> tail;
+
+        private int count;
+
+        public int Count { get => count; }
+
+        public bool IsEmpty { get { return count < 1 ? true : false; } }
+
+        public Deque() { }
+
+        public Deque(params T[] items)
+        {
+            for (int i = 0, length = items.Length; i < length; ++i)
+                this.PushBack(items[i]);
+        }
+
+        public void PushBack(T item)
+        {
+            DequeNode<T> newNode = new DequeNode<T>(item);
+
+            if (head == null)
+                head = tail = newNode;
+            else
+            {
+                tail.Next = newNode;
+                newNode.Previous = tail;
+                tail = newNode;
+            }
+
+            ++count;
+        }
+
+        public void PushFront(T item)
+        {
+            DequeNode<T> newNode = new DequeNode<T>(item);
+
+            if (head == null)
+                head = tail = newNode;
+            else
+            {
+                head.Previous = newNode;
+                newNode.Next = head;
+                head = newNode;
+            }
+
+            ++count;
+        }
+
+        public T PopBack()
+        {
+            if (count < 1)
+                throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty. ");
+
+            T item = tail.Value;
+            tail = tail.Previous;
+
+            if (tail == null)
+                head = null;
+
+            --count;
+            return item;
+        }           //Has to be improved
+
+        public T PopFront()
+        {
+            if (count < 1)
+                throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty.");
+
+            T item = head.Value;
+            head = head.Next;
+
+            if (head == null)
+                tail = null;
+
+            --count;
+            return item;
+        }           //Has to be improved
+
+        public bool TryPopBack(out T result)
+        {
+            if (count > 0)
+            {
+                result = tail.Value;
+                tail = tail.Previous;
+
+                if (tail == null)
+                    head = null;
+                else
+                    tail.Previous.Next = null;
+
+                --count;
+                return true;
+            }
+            else
+            {
+                result = default(T);
+                return false;
+            }
+        }       //Has to be improved
+
+        public bool TryPopFront(out T result)
+        {
+            if (count > 0)
+            {
+                result = head.Value;
+                head = head.Next;
+
+                if (head == null)
+                    tail = null;
+                else
+                    head.Previous = null;
+
+                --count;
+                return true;
+            }
+            else
+            {
+                result = default(T);
+                return false;
+            }
+        }       //Has to be improved
+
+        public T PeekBack() => count < 1 ? throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty.") : tail.Value;
+
+        public T PeekFront() => count < 1 ? throw new System.InvalidOperationException($"{nameof(Deque<T>)} is empty.") : head.Value;
+
+        public bool TryPeekBack(out T result)
+        {
+            if (count > 0)
+            {
+                result = tail.Value;
+                return true;
+            }
+            else
+            {
+                result = default(T);
+                return false;
+            }
+        }
+
+        public bool TryPeekFront(out T result)
+        {
+            if (count > 0)
+            {
+                result = head.Value;
+                return true;
+            }
+            else
+            {
+                result = default(T);
+                return false;
+            }
+        }
+
+        public bool Contains(T item)
+        {
+            DequeNode<T> current = head;
+
+            while (current != null)
+            {
+                if (current.Value != null)
+                {
+                    if(current.Value.Equals(item))
+                        return true;
+                }
+                else
+                {
+                    if (item == null)
+                        return true;
+                }
+
+                current = current.Next;
+            }
+
+            return false;
+        }
+
+        public void Clear()
+        {
+            head = null;
+            tail = null;
+            count = 0;
+        }
+
+        private sealed class DequeNode<T>
+        {
+            public DequeNode<T> Previous { get; set; }
+
+            public DequeNode<T> Next { get; set; }
+
+            public T Value { get; set; }
+
+            public DequeNode() { }
+
+            public DequeNode(T value) { this.Value = value; }
         }
     }
     #endregion
